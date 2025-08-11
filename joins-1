@@ -1,0 +1,209 @@
+Joins 
+1. Employees Table
+CREATE TABLE Employees (
+    emp_id INT PRIMARY KEY,
+    name VARCHAR(50),
+    department_id INT,
+    salary INT
+);
+
+INSERT INTO Employees (emp_id, name, department_id, salary) VALUES
+(1, 'Alice', 101, 60000),
+(2, 'Bob', 102, 55000),
+(3, 'Charlie', 101, 70000),
+(4, 'David', 103, 48000),
+(5, 'Eve', NULL, 75000),
+(6, 'Frank', 104, 52000),
+(7, 'Grace', 102, 58000),
+(8, 'Hannah', NULL, 62000);
+________________________________________
+🧱 2. Departments Table
+CREATE TABLE Departments (
+    department_id INT PRIMARY KEY,
+    department_name VARCHAR(50),
+    location VARCHAR(50)
+);
+
+INSERT INTO Departments (department_id, department_name, location) VALUES
+(101, 'HR', 'New York'),
+(102, 'IT', 'San Francisco'),
+(103, 'Finance', 'Chicago'),
+(104, 'Sales', 'Boston'),
+(105, 'Marketing', 'Los Angeles');
+________________________________________
+🔍 20 Hands-on SQL JOIN Questions
+________________________________________
+🔹 INNER JOIN
+1.	List all employees along with their department names.
+ANS:
+select name,department_name from employees join departments
+    -> on employees.department_id=departments.department_id;
++---------+-----------------+
+| name    | department_name |
++---------+-----------------+
+| Alice   | HR              |
+| Bob     | IT              |
+| Charlie | HR              |
+| David   | Finance         |
+| Frank   | Sales           |
+| Grace   | IT              |
++---------+-----------------+
+6 rows in set (0.00 sec)
+2.	Show the names of employees who work in the IT department.
+ANS:
+select name,department_name from employees join departments
+    -> on employees.department_id=departments.department_id
+    -> where departments.department_name='IT';
++-------+-----------------+
+| name  | department_name |
++-------+-----------------+
+| Bob   | IT              |
+| Grace | IT              |
++-------+-----------------+
+2 rows in set (0.01 sec)
+3.	Get the names and locations of departments where at least one employee works.
+ANS:
+select count(employees.name) as no_of_employees ,departments.location from employees join departments
+    -> on employees.department_id=departments.department_id
+    -> group by departments.location having count(employees.name)>=1;
++-----------------+---------------+
+| no_of_employees | location      |
++-----------------+---------------+
+|               2 | New York      |
+|               2 | San Francisco |
+|               1 | Chicago       |
+|               1 | Boston        |
++-----------------+---------------+
+4 rows in set (0.00 sec)
+4.	Find employees who work in the same location as the 'HR' department.
+ANS:
+ select employees.name,departments.location from employees join departments
+    -> on employees.department_id=departments.department_id
+    -> where departments.location='HR';
+Empty set (0.00 sec)
+5.	List department names and employee count (only departments with employees).
+ANS:
+select departments.department_name, count(employees.name) from employees join departments
+    -> on employees.department_id=departments.department_id
+    -> group by departments.department_name;
++-----------------+-----------------------+
+| department_name | count(employees.name) |
++-----------------+-----------------------+
+| HR              |                     2 |
+| IT              |                     2 |
+| Finance         |                     1 |
+| Sales           |                     1 |
++-----------------+-----------------------+
+4 rows in set (0.00 sec)
+________________________________________
+🔹 LEFT JOIN
+6.	List all employees and their departments (even if they don’t belong to any department).
+ANS:
+select employees.name,departments.department_name from employees left join departments
+    -> on employees.department_id=departments.department_id
+    -> ;
++---------+-----------------+
+| name    | department_name |
++---------+-----------------+
+| Alice   | HR              |
+| Bob     | IT              |
+| Charlie | HR              |
+| David   | Finance         |
+| Eve     | NULL            |
+| Frank   | Sales           |
+| Grace   | IT              |
+| Hannah  | NULL            |
++---------+-----------------+
+8 rows in set (0.01 sec)
+7.	Find employees who are not assigned to any department.
+ANS:
+select employees.name,departments.department_name from employees left join departments
+    -> on employees.department_id=departments.department_id
+    -> where department_name is null;
++--------+-----------------+
+| name   | department_name |
++--------+-----------------+
+| Eve    | NULL            |
+| Hannah | NULL           
+8.	List all departments and the names of employees working in them (include departments without employees).
+ANS:
+select d.department_name, e.name from departments d left join employees e on d.department_id = e.department_id;
++-----------------+---------+
+| department_name | name    |
++-----------------+---------+
+| HR              | Charlie |
+| HR              | Alice   |
+| IT              | Grace   |
+| IT              | Bob     |
+| Finance         | David   |
+| Sales           | Frank   |
+| Marketing       | NULL    |
++-----------------+---------+
+7 rows in set (0.00 sec)
+9.	Show employee names and department names, replacing NULLs with 'Unassigned'.
+ANS:
+select employees.name,case
+    -> when departments.department_name is null then 'Unassigned'
+    -> else departments.department_name
+    -> end as new_department_name from employees left join departments
+    -> on employees.department_id=departments.department_id;
++---------+---------------------+
+| name    | new_department_name |
++---------+---------------------+
+| Alice   | HR                  |
+| Bob     | IT                  |
+| Charlie | HR                  |
+| David   | Finance             |
+| Eve     | Unassigned          |
+| Frank   | Sales               |
+| Grace   | IT                  |
+| Hannah  | Unassigned          |
++---------+---------------------+
+8 rows in set (0.00 sec)
+10.	Find departments where no employees are assigned.
+ANS:
+select d.department_name from departments d left join employees e on d.department_id=e.department_id
+    -> where e.emp_id is null;
++-----------------+
+| department_name |
++-----------------+
+| Marketing       |
++-----------------+
+1 row in set (0.00 sec)
+________________________________________
+🔹 RIGHT JOIN (use LEFT JOIN with reversed tables if using SQLite/MySQL)
+11.	Show all departments and the employees working in them (even if no employees).
+(Use RIGHT JOIN or flip the LEFT JOIN if not supported)
+ANS:
+select e.name,d.department_name from departments d left join employees e on d.department_id=e.department_id;
++---------+-----------------+
+| name    | department_name |
++---------+-----------------+
+| Charlie | HR              |
+| Alice   | HR              |
+| Grace   | IT              |
+| Bob     | IT              |
+| David   | Finance         |
+| Frank   | Sales           |
+| NULL    | Marketing       |
++---------+-----------------+
+7 rows in set (0.00 sec)
+12.	List all employees and their department locations.
+ANS:
+ select e.name,d.location
+    -> from employees e
+    -> right join departments d on e.department_id =d.department_id;
++---------+---------------+
+| name    | location      |
++---------+---------------+
+| Charlie | New York      |
+| Alice   | New York      |
+| Grace   | San Francisco |
+| Bob     | San Francisco |
+| David   | Chicago       |
+| Frank   | Boston        |
+| NULL    | Los Angeles   |
++---------+---------------+
+7 rows in set (0.00 sec)
+________________________________________
+
