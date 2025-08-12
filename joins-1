@@ -206,4 +206,116 @@ ANS:
 +---------+---------------+
 7 rows in set (0.00 sec)
 ________________________________________
-
+🔹 FULL OUTER JOIN (Emulated in MySQL using UNION of LEFT and RIGHT JOIN)
+13.	List all employees and departments, even if they don't match.
+(Helpful to find both unassigned employees and empty departments)
+ANS: mysql> select employees.name,departments.department_name from employees left join departments on employees.department_id=departments.department_id
+    -> union select employees.name,departments.department_name from employees right join departments on employees.department_id=departments.department_id;
++---------+-----------------+
+| name    | department_name |
++---------+-----------------+
+| Alice   | HR              |
+| Bob     | IT              |
+| Charlie | HR              |
+| David   | Finance         |
+| Eve     | NULL            |
+| Frank   | Sales           |
+| Grace   | IT              |
+| Hannah  | NULL            |
+| NULL    | Marketing       |
++---------+-----------------+
+14.	Show which employees or departments are missing a match.
+ANS: mysql> select employees.name,departments.department_name from employees left join departments on employees.department_id=departments.department_id
+    -> where departments.department_name is null union
+    -> select employees.name,departments.department_name from employees right join departments on employees.department_id=departments.department_id
+    -> where employees.emp_id is null;
++--------+-----------------+
+| name   | department_name |
++--------+-----------------+
+| Eve    | NULL            |
+| Hannah | NULL            |
+| NULL   | Marketing       |
++--------+-----------------+
+________________________________________
+🔹 SELF JOIN
+15.	Find all pairs of employees who work in the same department.
+ANS:
+mysql> select e1.name,e2.name from employees e1 join employees e2 on e1.department_id=e2.department_id where e1.emp_id<e2.emp_id;
++-------+---------+
+| name  | name    |
++-------+---------+`
+| Alice | Charlie |
+| Bob   | Grace   |
++-------+---------+
+16.	List employees along with their colleagues in the same department (exclude self).
+ANS: mysql> select e1.name,e2.name from employees e1 join employees e2 on e1.department_id=e2.department_id where e1.emp_id != e2.emp_id;
++---------+---------+
+| name    | name    |
++---------+---------+
+| Charlie | Alice   |
+| Grace   | Bob     |
+| Alice   | Charlie |
+| Bob     | Grace   |
++---------+---------+
+17.	Find all employee pairs where one earns more than the other.
+ANS: mysql> select e1.name,e2.name from employees e1 join employees e2 on e1.salary>e2.salary;
++---------+---------+
+| name    | name    |
++---------+---------+
+| Hannah  | Alice   |
+| Eve     | Alice   |
+| Charlie | Alice   |
+| Hannah  | Bob     |
+| Grace   | Bob     |
+| Eve     | Bob     |
+| Charlie | Bob     |
+| Alice   | Bob     |
+| Eve     | Charlie |
+| Hannah  | David   |
+| Grace   | David   |
+| Frank   | David   |
+| Eve     | David   |
+| Charlie | David   |
+| Bob     | David   |
+| Alice   | David   |
+| Hannah  | Frank   |
+| Grace   | Frank   |
+| Eve     | Frank   |
+| Charlie | Frank   |
+| Bob     | Frank   |
+18.	List each employee with the name of the highest-paid person in their department.
+ANS:
+mysql> select e.name,e.salary,d.department_name from employees e join departments d
+    -> on e.department_id=d.department_id
+    -> where e.salary=(select max(salary) from employees where department_id=e.department_id);
++---------+--------+-----------------+
+| name    | salary | department_name |
++---------+--------+-----------------+
+| Charlie |  70000 | HR              |
+| David   |  48000 | Finance         |
+| Frank   |  52000 | Sales           |
+| Grace   |  58000 | IT              |
++---------+--------+-----------------+
+________________________________________
+🔹 CROSS JOIN
+19.	List all possible employee-department combinations.
+ANS: mysql> select * from employees cross join departments
+    -> on employees.department_id=departments.department_id;
++--------+---------+---------------+--------+---------------+-----------------+---------------+
+| emp_id | name    | department_id | salary | department_id | department_name | location      |
++--------+---------+---------------+--------+---------------+-----------------+---------------+
+|      1 | Alice   |           101 |  60000 |           101 | HR              | New York      |
+|      2 | Bob     |           102 |  55000 |           102 | IT              | San Francisco |
+|      3 | Charlie |           101 |  70000 |           101 | HR              | New York      |
+|      4 | David   |           103 |  48000 |           103 | Finance         | Chicago       |
+|      6 | Frank   |           104 |  52000 |           104 | Sales           | Boston        |
+|      7 | Grace   |           102 |  58000 |           102 | IT              | San Francisco |
++--------+---------+---------------+--------+---------------+-----------------+---------------+
+20.	Count how many total combinations of employees and departments exist.
+ANS: mysql> select count(*) from employees cross join  departments
+    -> on employees.department_id=departments.department_id;
++----------+
+| count(*) |
++----------+
+|        6 |
++----------+
